@@ -2,11 +2,13 @@ import {IController} from './i-controller';
 import {getLogger} from '../libs/logger';
 import {Request, Response} from 'express-serve-static-core';
 import {getServerAppMetadataArgsStorage} from "../metadata/common-metadata";
-import {ILogRule} from "../log-rules/i-log-rule";
-import {assert} from "chai";
-import {loggers} from "../../node_modules/winston/scratch/1280/node_modules/winston";
 import {TestLogRule} from "../log-rules/test-log-rule";
 import {createLogRule} from "../metadata/log-rule/log-rule-factory";
+import {Auth} from "../libs/auth";
+import {IModel} from "../models/i-model";
+import {switchMap} from "rxjs/operators";
+import {IAuthPayload} from "../libs/i-auth-payload";
+import {_throw} from "rxjs/observable/throw";
 
 /***/
 export class TextLogController implements IController {
@@ -15,62 +17,63 @@ export class TextLogController implements IController {
     logger = getLogger(module);
 
     /***/
-    constructor() {
+    auth = new Auth(this.model);
+
+    /***/
+    constructor(public model: IModel) {
     }
 
     /***/
     async handler(req: Request, res: Response) {
         this.logger.debug('handleRoutes /textlog post');
 
-        // todo авторизация
+        this.auth.checkAuthorization(req, res)
+            .pipe(switchMap((authorizationResult: IAuthPayload) => {
+                    if (authorizationResult) {
+                        let source = authorizationResult.user;
 
-        // todo
-        let source = 'todo';
+                        // Правило для анализа лога
+                        let rule = req.body.rule;
 
-        // Правило для анализа лога
-        let rule = req.body.rule;
+                        if (!rule) {
+                            return _throw(new NoRuleInRequest('Нет правила в запросе клиента'));
+                        }
 
-        if (!rule) {
-            res.status(400);
-            res.json({
-                message: `Нет правила в запросе клиента`
-            });
-            return;
-        }
+                        if (!req.body.data) {
+                            return _throw(new DataNotFound('Нет данных в запросе клиента'));
+                        }
 
-        if (!req.body.data) {
-            res.status(400);
-            res.json({
-                message: `Нет данных в запросе клиента`
-            });
-            return;
-        }
+                        let logRuleCtor = getServerAppMetadataArgsStorage().logRules.find(x => x.name === rule);
 
-        let logRuleCtor = getServerAppMetadataArgsStorage().logRules.find(x => x.name === rule);
+                        if (!logRuleCtor) {
+                            return _throw(new RuleNotFound('Нет правила на серевере'));
+                        }
 
-        if (!logRuleCtor) {
-            res.status(400);
-            res.json({
-                message: `Нет правила на серевере`
-            });
-            return;
-        }
+                        // todo!!!!!!!
+                        let dd = new TestLogRule();
 
-        // todo!!!!!!!
-        let dd = new TestLogRule();
-
-        let logRuleInstance = createLogRule(logRuleCtor.ctor);
-        logRuleInstance.perform(req.body.data)
+                        let logRuleInstance = createLogRule(logRuleCtor.ctor);
+                        return logRuleInstance.perform(req.body.data);
+                    }
+                }
+            ))
             .subscribe(
                 (line) => {
                     this.logger.debug(line);
                     console.log(`passed: ${line}`);
                 },
                 (error => {
-                    res.status(500);
-                    res.json({
-                        message: error
-                    });
+                    if (error instanceof NoRuleInRequest || error instanceof RuleNotFound || error instanceof DataNotFound) {
+                        res.status(400);
+                        res.json({
+                            message: error.message
+                        });
+                    } else {
+                        res.status(500);
+                        res.json({
+                            message: error.message
+                        });
+                    }
                 }),
                 () => {
                     res.json({
@@ -80,3 +83,25 @@ export class TextLogController implements IController {
             );
     }
 }
+
+/***/
+class NoRuleInRequest {
+    /***/
+    constructor(public message: string) {
+    }
+}
+
+/***/
+class RuleNotFound {
+    /***/
+    constructor(public message: string) {
+    }
+}
+
+/***/
+class DataNotFound {
+    /***/
+    constructor(public message: string) {
+    }
+}
+

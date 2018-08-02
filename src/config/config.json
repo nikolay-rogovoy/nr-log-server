@@ -1,5 +1,8 @@
 {
     "express": {
         "port": 3030
+    },
+    "db": {
+        "connection": "mongodb://localhost:27017/logserver"
     }
 }

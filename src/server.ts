@@ -6,6 +6,16 @@ import {getLogger} from './libs/logger';
 import {Router} from "express-serve-static-core";
 import config from './config/config';
 import * as http from "http";
+import {fromPromise} from "rxjs/observable/fromPromise";
+import {of} from "rxjs/observable/of";
+import {map, switchMapTo} from "rxjs/operators";
+import {Mongoose} from "mongoose";
+import {IClientModel} from "./models/i-client-model";
+import {clientSchema} from "./schemas/client";
+import {IModel} from "./models/i-model";
+import mongoose = require("mongoose");
+import {Observable} from "rxjs/Observable";
+
 
 /**OKNA.space backend server*/
 export class Server {
@@ -20,38 +30,57 @@ export class Server {
     httpServer: http.Server;
 
     /***/
-    restRouter: RestRouter = new RestRouter();
+    model = <IModel>{};
+
+    /***/
+    mongoose: Mongoose;
 
     /**Конструктор*/
     constructor() {
         this.logger.debug('> Server()');
         this.app = express();
         this.httpServer = http.createServer(this.app);
-        this.configServer();
-        this.logger.debug('< Server()');
+        this.configServer()
+            .pipe(
+                switchMapTo(this.initMongoose()),
+                switchMapTo(this.configureExpress()),
+                switchMapTo(this.startServer())
+            )
+            .subscribe(() => {
+                    this.logger.debug('server started');
+                },
+                (error) => {
+                    this.logger.error(error);
+                }
+            );
     }
 
     /**Конфигурация сервера*/
-    configServer() {
+    configServer(): Observable<boolean> {
         this.logger.debug('> configServer');
-        this.logger.debug('< configServer');
-        this.initSequilize();
+        return of(true);
     }
 
     /**Получить соединение с постгрес*/
-    initSequilize() {
-        this.logger.debug('> initSequilize');
-        this.logger.debug('< initSequilize');
-        this.configureExpress();
+    initMongoose(): Observable<boolean> {
+        this.logger.debug('> initMongoose');
+        return fromPromise(mongoose.connect(config.get('db:connection'), {
+            useNewUrlParser: true,
+            config: {autoIndex: false}
+        }))
+            .pipe(
+                map((mongoose: Mongoose) => {
+                    this.mongoose = mongoose;
+                    this.model.client = mongoose.model<IClientModel>("Client", clientSchema);
+                    return true;
+                })
+            );
     }
 
     /**Конфигурация HTTP сервера*/
-    configureExpress() {
+    configureExpress(): Observable<boolean> {
         this.logger.debug('> configureExpress');
         this.app.use(function (req, res, next) {
-            // if (origins.indexOf(req.header('host').toLowerCase()) > -1) {
-            //     res.header('Access-Control-Allow-Origin', `${req.headers.origin}`);
-            // }
             res.header('Access-Control-Allow-Origin', `*`);
             res.header('Access-Control-Allow-Credentials', `true`);
             res.header('Access-Control-Allow-Methods', 'GET,POST,DELETE,PUT');
@@ -67,24 +96,23 @@ export class Server {
         this.app.use(bodyParser.json({limit: '50mb'}));
         let router: Router = express.Router();
         this.app.use('/api', router);
-        this.restRouter.handleRoutes(router);
-        this.startServer();
-        this.logger.debug('< configureExpress');
-    };
+        let restRouter = new RestRouter(this.model);
+        restRouter.handleRoutes(router);
+        return of(true);
+    }
 
     /**Запуск сервера*/
-    startServer() {
+    startServer(): Observable<boolean> {
         this.logger.debug('> startServer');
-        this.httpServer.listen(config.get('express:port'), function(){});
-        this.logger.debug('< startServer');
-    };
+        this.httpServer.listen(config.get('express:port'), function () {
+        });
+        return of(true);
+    }
 
     /**Остановка сервера*/
     stop(err) {
         this.logger.debug("stop - OK", err);
         process.exit(1);
-    };
+    }
 
 }
-
-

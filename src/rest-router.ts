@@ -2,6 +2,8 @@ import {getLogger} from './libs/logger';
 import {Router} from 'express-serve-static-core';
 import {TestController} from "./controllers/test-controller";
 import {TextLogController} from "./controllers/text-log-controller";
+import {IModel} from "./models/i-model";
+import {LoginController} from "./controllers/login-controller";
 
 /**Класс обработки маршрутов*/
 export class RestRouter {
@@ -33,6 +35,9 @@ export class RestRouter {
      *
      * */
 
+    constructor(public model: IModel) {
+    }
+
     async handleRoutes(router: Router) {
 
         this.logger.debug("handleRoutes -> start");
@@ -46,8 +51,12 @@ export class RestRouter {
         router.get('/test', cnt.handler.bind(cnt));
 
         //
-        cnt = new TextLogController();
+        cnt = new TextLogController(this.model);
         router.post('/textlog', cnt.handler.bind(cnt));
+
+        //
+        cnt = new LoginController(this.model);
+        router.post('/login', cnt.handler.bind(cnt));
 
         this.logger.debug("handleRoutes <- end");
     }
