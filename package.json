@@ -4,6 +4,9 @@
     "description": "nr-log-server",
     "main": "index.js",
     "scripts": {
+        "start": "npm run build && cd dist && node app.js",
+        "start-debug": "npm run build && cd dist && node --inspect --max-old-space-size=8192 app.js",
+        "start-debug-brk": "npm run build && cd dist && node --inspect-brk --max-old-space-size=8192 app.js",
         "build": "node tools/pre-build.js && npm run prepare && node tools/copy.js",
         "publish": "cd ./dist && npm publish",
         "pretest": "tsc",
@@ -32,6 +35,8 @@
         "source-map-support": "^0.5.6",
         "ts-node": "^3.3.0",
         "typescript": "^3.0.1",
+        "ncp": "^2.0.0",
+        "mkdirp": "^0.5.1",
         "rimraf": "^2.6.2"
     },
     "nyc": {
@@ -54,8 +59,14 @@
     },
     "dependencies": {
         "@types/node": "^10.5.4",
-        "pg": "^7.4.3",
+        "@types/express": "^4.16.0",
+        "@types/winston": "^2.3.9",
+        "winston": "^2.4.3",
         "nr-log-parser": "^0.0.3",
-        "rxjs": "^5.5.1"
+        "rxjs": "^5.5.1",
+        "express": "^4.16.3",
+        "jsonwebtoken": "^8.3.0",
+        "nconf": "^0.10.0",
+        "reflect-metadata": "^0.1.12"
     }
 }
