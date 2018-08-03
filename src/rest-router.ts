@@ -4,6 +4,7 @@ import {TestController} from "./controllers/test-controller";
 import {TextLogController} from "./controllers/text-log-controller";
 import {IModel} from "./models/i-model";
 import {LoginController} from "./controllers/login-controller";
+import {Mongoose} from "mongoose";
 
 /**Класс обработки маршрутов*/
 export class RestRouter {
@@ -35,7 +36,7 @@ export class RestRouter {
      *
      * */
 
-    constructor(public model: IModel) {
+    constructor(public model: IModel, public mongoose: Mongoose) {
     }
 
     async handleRoutes(router: Router) {
@@ -47,7 +48,7 @@ export class RestRouter {
         // todo Добавить фабрику контролеров
 
         //
-        cnt = new TestController();
+        cnt = new TestController(this.model, this.mongoose);
         router.get('/test', cnt.handler.bind(cnt));
 
         //

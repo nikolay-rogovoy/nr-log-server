@@ -32,26 +32,6 @@ export class Auth {
                     // Предоставлен доступ для
                     this.logger.info(`Предоставлен доступ для ${JSON.stringify(authorizationResult)}`);
                     return authorizationResult;
-                }),
-                catchError((error) => {
-                    if (error instanceof InvalidToken ||
-                        error instanceof BadAutorizationHeader ||
-                        error instanceof NoAutorizationHeader ||
-                        error instanceof PayloadInvalid ||
-                        error instanceof InvalidPayload
-                    ) {
-                        // Не авторизованный доступ
-                        this.logger.error(`Неавторизованный доступ ${error.message}`);
-                        res.status(401);
-                        res.end();
-                        return of(null);
-                    } else {
-                        // Ошибка разбора токена
-                        this.logger.error(`Ошибка разбора токена: ${error.message}`);
-                        res.status(500);
-                        res.end();
-                        return of(null);
-                    }
                 })
             );
     }
@@ -97,7 +77,6 @@ export class Auth {
         return fromPromise(
             this.model.client.findById(payload.user.id)
                 .exec()
-
         )
             .pipe(
                 map(
@@ -110,6 +89,38 @@ export class Auth {
                     }
                 )
             );
+    }
+
+    /***/
+    isErrorAutorization(error) {
+        if (error instanceof InvalidToken ||
+            error instanceof BadAutorizationHeader ||
+            error instanceof NoAutorizationHeader ||
+            error instanceof PayloadInvalid ||
+            error instanceof InvalidPayload
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /***/
+    handleErrorAutorization(error, res: Response) {
+        if (error instanceof InvalidToken ||
+            error instanceof BadAutorizationHeader ||
+            error instanceof NoAutorizationHeader ||
+            error instanceof PayloadInvalid ||
+            error instanceof InvalidPayload
+        ) {
+            // Не авторизованный доступ
+            this.logger.error(`Неавторизованный доступ ${error.message}`);
+            res.status(401);
+            res.end();
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 
