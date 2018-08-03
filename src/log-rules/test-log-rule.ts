@@ -1,5 +1,5 @@
 import {ILogRule} from "./i-log-rule";
-import {ConsoleStorage, IFactattribtype, IFacttype, LogParser} from "nr-log-parser";
+import {ConsoleStorage, IFactattribtype, IFacttype, IStorage, LogParser} from "nr-log-parser";
 import {IFact} from "nr-log-parser/i-fact";
 import {IFactattrib} from "nr-log-parser/i-factattrib";
 import {Readable} from "stream";
@@ -80,11 +80,11 @@ export class TestLogRule implements ILogRule {
     ];
 
     /***/
-    perform(logData: string): Observable<any> {
+    perform(logData: string, storeges: IStorage[]): Observable<any> {
         let stream = new Readable();
         stream.push(logData);
         stream.push(null);
-        let parser = new LogParser(this.facttypes, stream, [new ConsoleStorage()]);
+        let parser = new LogParser(this.facttypes, stream, storeges);
         return parser.parse();
     }
 }

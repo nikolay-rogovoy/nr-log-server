@@ -8,13 +8,16 @@ import config from './config/config';
 import * as http from "http";
 import {fromPromise} from "rxjs/observable/fromPromise";
 import {of} from "rxjs/observable/of";
-import {map, switchMapTo} from "rxjs/operators";
+import {map, switchMap, switchMapTo} from "rxjs/operators";
 import {Mongoose} from "mongoose";
 import {IClientModel} from "./models/i-client-model";
 import {clientSchema} from "./schemas/client";
 import {IModel} from "./models/i-model";
 import mongoose = require("mongoose");
 import {Observable} from "rxjs/Observable";
+import {factSchema} from "./schemas/fact";
+import {IFactModel} from "./models/i-fact-model";
+import {IFactattribModel} from "./models/i-factattrib-model";
 
 
 /**OKNA.space backend server*/
@@ -42,9 +45,9 @@ export class Server {
         this.httpServer = http.createServer(this.app);
         this.configServer()
             .pipe(
-                switchMapTo(this.initMongoose()),
-                switchMapTo(this.configureExpress()),
-                switchMapTo(this.startServer())
+                switchMap(() => this.initMongoose()),
+                switchMap(() => this.configureExpress()),
+                switchMap(() => this.startServer())
             )
             .subscribe(() => {
                     this.logger.debug('server started');
@@ -70,8 +73,11 @@ export class Server {
         }))
             .pipe(
                 map((mongoose: Mongoose) => {
+                    // todo debugger
                     this.mongoose = mongoose;
-                    this.model.client = mongoose.model<IClientModel>("Client", clientSchema);
+                    this.model.client = mongoose.model<IClientModel>('Client', clientSchema);
+                    this.model.fact = mongoose.model<IFactModel>('Fact', factSchema);
+                    this.model.factattrib = mongoose.model<IFactattribModel>('Factattrib', factSchema);
                     return true;
                 })
             );
@@ -96,7 +102,7 @@ export class Server {
         this.app.use(bodyParser.json({limit: '50mb'}));
         let router: Router = express.Router();
         this.app.use('/api', router);
-        let restRouter = new RestRouter(this.model);
+        let restRouter = new RestRouter(this.model, this.mongoose);
         restRouter.handleRoutes(router);
         return of(true);
     }

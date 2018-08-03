@@ -9,6 +9,9 @@ import {IModel} from "../models/i-model";
 import {switchMap} from "rxjs/operators";
 import {IAuthPayload} from "../libs/i-auth-payload";
 import {_throw} from "rxjs/observable/throw";
+import {empty} from "rxjs/observable/empty";
+import {ConsoleStorage} from "nr-log-parser";
+import {MongoStorage} from "../log-rules/mongo-storage";
 
 /***/
 export class TextLogController implements IController {
@@ -20,16 +23,15 @@ export class TextLogController implements IController {
     auth = new Auth(this.model);
 
     /***/
-    constructor(public model: IModel) {
+    constructor(public model: IModel    ) {
     }
 
     /***/
     async handler(req: Request, res: Response) {
         this.logger.debug('handleRoutes /textlog post');
-
         this.auth.checkAuthorization(req, res)
-            .pipe(switchMap((authorizationResult: IAuthPayload) => {
-                    if (authorizationResult) {
+            .pipe(
+                switchMap((authorizationResult: IAuthPayload) => {
                         let source = authorizationResult.user;
 
                         // Правило для анализа лога
@@ -53,14 +55,12 @@ export class TextLogController implements IController {
                         let dd = new TestLogRule();
 
                         let logRuleInstance = createLogRule(logRuleCtor.ctor);
-                        return logRuleInstance.perform(req.body.data);
-                    }
+                        return logRuleInstance.perform(req.body.data, [new ConsoleStorage(), new MongoStorage(this.model.fact)]);
                 }
             ))
             .subscribe(
                 (line) => {
-                    this.logger.debug(line);
-                    console.log(`passed: ${line}`);
+                    this.logger.debug(`passed: ${line}`);
                 },
                 (error => {
                     if (error instanceof NoRuleInRequest || error instanceof RuleNotFound || error instanceof DataNotFound) {
@@ -68,6 +68,9 @@ export class TextLogController implements IController {
                         res.json({
                             message: error.message
                         });
+                    }
+                    else if (this.auth.isErrorAutorization(error)) {
+                        this.auth.handleErrorAutorization(error, res)
                     } else {
                         res.status(500);
                         res.json({
@@ -104,4 +107,3 @@ class DataNotFound {
     constructor(public message: string) {
     }
 }
-
