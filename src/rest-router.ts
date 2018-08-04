@@ -5,6 +5,7 @@ import {TextLogController} from "./controllers/text-log-controller";
 import {IModel} from "./models/i-model";
 import {LoginController} from "./controllers/login-controller";
 import {Mongoose} from "mongoose";
+import {GetLogController} from "./controllers/get-log-controller";
 
 /**Класс обработки маршрутов*/
 export class RestRouter {
@@ -58,6 +59,10 @@ export class RestRouter {
         //
         cnt = new LoginController(this.model);
         router.post('/login', cnt.handler.bind(cnt));
+
+        //
+        cnt = new GetLogController(this.model);
+        router.get('/getlog/:start/:end', cnt.handler.bind(cnt));
 
         this.logger.debug("handleRoutes <- end");
     }
