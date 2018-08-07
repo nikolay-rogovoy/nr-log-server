@@ -9,9 +9,10 @@ import {IModel} from "../models/i-model";
 import {switchMap} from "rxjs/operators";
 import {IAuthPayload} from "../libs/i-auth-payload";
 import {_throw} from "rxjs/observable/throw";
-import {empty} from "rxjs/observable/empty";
-import {ConsoleStorage} from "nr-log-parser";
+import {ConsoleStorage, IStorage} from "nr-log-parser";
 import {MongoStorage} from "../log-rules/mongo-storage";
+import {IAuthUser} from "../libs/i-auth-user";
+import {ILogRuleParam} from "../log-rules/i-log-rule-param";
 
 /***/
 export class TextLogController implements IController {
@@ -23,7 +24,7 @@ export class TextLogController implements IController {
     auth = new Auth(this.model);
 
     /***/
-    constructor(public model: IModel    ) {
+    constructor(public model: IModel) {
     }
 
     /***/
@@ -32,7 +33,7 @@ export class TextLogController implements IController {
         this.auth.checkAuthorization(req, res)
             .pipe(
                 switchMap((authorizationResult: IAuthPayload) => {
-                        let source = authorizationResult.user;
+                        let user = authorizationResult.user;
 
                         // Правило для анализа лога
                         let rule = req.body.rule;
@@ -55,9 +56,13 @@ export class TextLogController implements IController {
                         let dd = new TestLogRule();
 
                         let logRuleInstance = createLogRule(logRuleCtor.ctor);
-                        return logRuleInstance.perform(req.body.data, [new ConsoleStorage(), new MongoStorage(this.model.fact)]);
-                }
-            ))
+                        return logRuleInstance.perform(<ILogRuleParam>{
+                            id: user.id,
+                            logData: req.body.data,
+                            storeges: this.getStorages(user)
+                        });
+                    }
+                ))
             .subscribe(
                 (line) => {
                     this.logger.debug(`passed: ${line}`);
@@ -84,6 +89,11 @@ export class TextLogController implements IController {
                     });
                 }
             );
+    }
+
+    /***/
+    getStorages(user: IAuthUser): IStorage[] {
+        return [new ConsoleStorage(), new MongoStorage(this.model.factClient, user.id)]
     }
 }
 

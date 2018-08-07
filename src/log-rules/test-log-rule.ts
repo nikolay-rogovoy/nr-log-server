@@ -5,6 +5,8 @@ import {IFactattrib} from "nr-log-parser/i-factattrib";
 import {Readable} from "stream";
 import {Observable} from "rxjs/Observable";
 import {LogRule} from "../metadata/log-rule/log-rule";
+import {getLogParser} from "./getLogParser";
+import {ILogRuleParam} from "./i-log-rule-param";
 
 /***/
 @LogRule('test log')
@@ -80,11 +82,11 @@ export class TestLogRule implements ILogRule {
     ];
 
     /***/
-    perform(logData: string, storeges: IStorage[]): Observable<any> {
+    perform(param: ILogRuleParam): Observable<any> {
         let stream = new Readable();
-        stream.push(logData);
+        stream.push(param.logData);
         stream.push(null);
-        let parser = new LogParser(this.facttypes, stream, storeges);
-        return parser.parse();
+        let parser = getLogParser(param.id, this.facttypes, param.storeges);
+        return parser.parse(stream);
     }
 }

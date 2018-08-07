@@ -1,6 +1,5 @@
 import {IController} from './i-controller';
 import {getLogger} from '../libs/logger';
-import {Pool} from 'pg';
 import {Request, Response} from 'express-serve-static-core';
 import * as jwt from "jsonwebtoken";
 import * as crypto from 'crypto';

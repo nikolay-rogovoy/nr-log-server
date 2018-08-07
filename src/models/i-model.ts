@@ -1,6 +1,6 @@
 import {Model} from "mongoose";
 import {IClientModel} from "./i-client-model";
-import {IFactModel} from "./i-fact-model";
+import {IFactClientModel} from "./i-fact-client-model";
 import {IFactattribModel} from "./i-factattrib-model";
 
 /***/
@@ -8,7 +8,7 @@ export interface IModel {
     /***/
     client: Model<IClientModel>;
     /***/
-    fact: Model<IFactModel>;
+    factClient: Model<IFactClientModel>;
     /***/
     factattrib: Model<IFactattribModel>;
 }
