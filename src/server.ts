@@ -8,15 +8,16 @@ import config from './config/config';
 import * as http from "http";
 import {fromPromise} from "rxjs/observable/fromPromise";
 import {of} from "rxjs/observable/of";
-import {map, switchMap, switchMapTo} from "rxjs/operators";
+import {map, switchMap} from "rxjs/operators";
 import {Mongoose} from "mongoose";
 import {IClientModel} from "./models/i-client-model";
 import {clientSchema} from "./schemas/client";
 import {IModel} from "./models/i-model";
-import mongoose = require("mongoose");
 import {Observable} from "rxjs/Observable";
-import {factSchema} from "./schemas/fact";
-import {IFactModel} from "./models/i-fact-model";
+import {factClientSchema} from "./schemas/fact-client";
+import {IFactClientModel} from "./models/i-fact-client-model";
+import {factattribSchema} from "./schemas/factattrib";
+import mongoose = require("mongoose");
 import {IFactattribModel} from "./models/i-factattrib-model";
 
 
@@ -76,8 +77,8 @@ export class Server {
                     // todo debugger
                     this.mongoose = mongoose;
                     this.model.client = mongoose.model<IClientModel>('Client', clientSchema);
-                    this.model.fact = mongoose.model<IFactModel>('Fact', factSchema);
-                    this.model.factattrib = mongoose.model<IFactattribModel>('Factattrib', factSchema);
+                    this.model.factClient = mongoose.model<IFactClientModel>('FactClient', factClientSchema);
+                    this.model.factattrib = mongoose.model<IFactattribModel>('FactattribClient', factattribSchema);
                     return true;
                 })
             );
@@ -101,7 +102,7 @@ export class Server {
          * */
         this.app.use(bodyParser.json({limit: '50mb'}));
         let router: Router = express.Router();
-        this.app.use('/api', router);
+        this.app.use('/api_log_server', router);
         let restRouter = new RestRouter(this.model, this.mongoose);
         restRouter.handleRoutes(router);
         return of(true);

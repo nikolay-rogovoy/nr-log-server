@@ -42,7 +42,9 @@ export class GetLogController implements IController {
                             return _throw(new InvalidDate(''));
                         } else {
                             return fromPromise(this.model
-                                .fact.find()
+                                .factClient.find()
+                                // todo
+                                .where('client').equals(authorizationResult.user.id)
                                 .where('start').gte(start)
                                 .where('end').lte(end));
                             // return fromPromise(this.model

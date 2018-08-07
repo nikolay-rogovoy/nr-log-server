@@ -1,8 +1,9 @@
 import {Observable} from "rxjs/Observable";
 import {IStorage} from "nr-log-parser";
+import {ILogRuleParam} from "./i-log-rule-param";
 
 /***/
 export interface ILogRule {
     /***/
-    perform(logData: any, storeges: IStorage[]): Observable<any>;
+    perform(param: ILogRuleParam): Observable<any>;
 }

@@ -1,7 +1,7 @@
 /***/
 export interface IAuthUser {
     /***/
-    id: number;
+    id: string;
     /***/
     name: string;
     /***/
