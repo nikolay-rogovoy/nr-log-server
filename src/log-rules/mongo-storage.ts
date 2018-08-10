@@ -16,8 +16,6 @@ export class MongoStorage implements IStorage {
 
     /***/
     write(fact: IFact): Observable<any> {
-        // todo
-        debugger;
         const factClientModel = <IFactClientModel>fact;
         factClientModel.client = this.idclient;
         return fromPromise(this.model.create(fact));
