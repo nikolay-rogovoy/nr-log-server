@@ -560,8 +560,9 @@ function getDeleteController(): IFacttype {
             let regExpResult;
             while (regExpResult = regExp.exec(line)) {
                 let id = regExpResult[1];
-                let idEntity = regExpResult[2];
-                let start = new Date(regExpResult[3]);
+                let entityName = regExpResult[2];
+                let idEntity = regExpResult[3];
+                let start = new Date(regExpResult[4]);
                 return <IFact>{
                     start,
                     name: name,
@@ -570,6 +571,10 @@ function getDeleteController(): IFacttype {
                         <IFactattrib> {
                             name: 'id',
                             value: id
+                        },
+                        <IFactattrib> {
+                            name: entityName,
+                            value: entityName
                         },
                         <IFactattrib> {
                             name: 'idEntity',
@@ -604,11 +609,12 @@ function getDeleteArrayController(): IFacttype {
     return <IFacttype> {
         name: name,
         check: (line: string): IFact => {
-            let regExp = /{"level":"debug","message":"{\\"id\\":(\d+),\\"message\\":\\"handleRoutes -> post \/appealdialog\/delete\\"}","label":"delete-array-controller\.js","timestamp":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g;
+            let regExp = /{"level":"debug","message":"{\\"id\\":(\d+),\\"message\\":\\"handleRoutes -> post \/([\d\w]+)\/delete\\"}","label":"delete-array-controller\.js","timestamp":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g;
             let regExpResult;
             while (regExpResult = regExp.exec(line)) {
                 let id = regExpResult[1];
-                let start = new Date(regExpResult[2]);
+                let entityName = regExpResult[2];
+                let start = new Date(regExpResult[3]);
                 return <IFact>{
                     start,
                     name: name,
@@ -617,6 +623,10 @@ function getDeleteArrayController(): IFacttype {
                         <IFactattrib> {
                             name: 'id',
                             value: id
+                        },
+                        <IFactattrib> {
+                            name: entityName,
+                            value: entityName
                         }
                     ]
                 };
